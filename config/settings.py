@@ -89,7 +89,18 @@ CACHES = {
         "TIMEOUT": 300,  # Cache timeout in seconds (5 minutes)
     }
 }
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
+CELERY_TIMEZONE = "Asia/Dhaka"
+CELERY_ENABLE_UTC = False
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 300
+CELERY_TASK_SOFT_TIME_LIMIT = 240
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
@@ -130,7 +141,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 
 USE_I18N = True
 
@@ -141,6 +152,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Custom user model
+AUTH_USER_MODEL = 'account.User'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -159,3 +172,71 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'md.omarfaruk950147@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'lqsd vtui jcxf mfqm')
+
+
+from celery.schedules import crontab
+
+# CELERY_BEAT_SCHEDULE = {
+#     "send-email-every-minute": {
+#         "task": "app.tasks.is_expired_otp",
+#         "schedule": crontab(minute="*/1"),
+#         "args": ("test@example.com",)
+#     }
+# }
+
+# =========================
+# Django REST Framework
+# =========================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # Default permission for API views 
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# =========================
+# Logging
+# =========================
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'standard': {'format': '[{levelname}] {asctime} {name} - {message}', 'style': '{'}},
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'level': 'INFO', 'formatter': 'standard'},
+        'debug_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'filename': os.path.join(LOG_DIR, 'debug.log'),
+            'maxBytes': 5*1024*1024,
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'ERROR',
+            'filename': os.path.join(LOG_DIR, 'error.log'),
+            'maxBytes': 5*1024*1024,
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+    },
+    'loggers': {
+        'django': {'handlers': ['console', 'error_file'], 'level': 'INFO', 'propagate': False},
+        'project': {'handlers': ['console', 'debug_file', 'error_file'], 'level': 'DEBUG', 'propagate': False},
+    },
+}
+
+# =========================
+# Security headers
+# =========================
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
