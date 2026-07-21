@@ -1,0 +1,19 @@
+[project]
+name = "live-portfolio"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "celery>=5.6.3",
+    "channels>=4.3.2",
+    "daphne>=4.2.2",
+    "django>=6.0.7",
+    "django-cors-headers>=4.9.0",
+    "django-redis>=7.0.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "pillow>=12.3.0",
+    "python-dotenv>=1.2.2",
+    "redis>=8.0.1",
+]
