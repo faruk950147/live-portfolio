@@ -1,15 +1,18 @@
 import os
-import django
 from celery import Celery
 
+# Django settings module
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-
-django.setup()
 
 app = Celery('config')
 
+# Load CELERY_ settings from Django settings.py
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
+# Auto discover tasks from all installed apps
 app.autodiscover_tasks()
 
-app.conf.broker_connection_retry_on_startup = True
+# Optional debug task (only for development)
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request}')
