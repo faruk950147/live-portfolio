@@ -68,7 +68,10 @@ class SignupSerializer(serializers.ModelSerializer):
 
             # Send OTP after successful commit
             transaction.on_commit(
-                lambda: send_verification_email.delay(user.email, otp)
+                lambda: send_verification_email.delay(
+                    user.email,
+                    otp
+                )
             )
 
         return user
