@@ -5,6 +5,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 
 from validation.validators import (
     phone_validator,
@@ -96,6 +97,7 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
         _("Profile Image"),
         upload_to="users/%Y/%m/%d/",
         default="defaults/default.jpg",
+        null=True,
         blank=True,
         validators=[
             validate_file_extension,
@@ -143,6 +145,21 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
             self.full_clean()
 
         super().save(*args, **kwargs)
+
+    @property
+    def image_tag(self):
+        image = getattr(self, "image", None)
+
+        if image and hasattr(image, "url"):
+            return format_html(
+                '''
+                <img src="{}" style="width:30px; height:30px; object-fit:cover; 
+                border-radius:5px; border:1px solid #ddd;" />
+                ''',
+                image.url
+            )
+
+        return format_html('<span>No Image</span>')
 
     def __str__(self):
         return self.username
