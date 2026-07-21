@@ -23,9 +23,10 @@ def error(message, code=400):
     
     
 class RootAPIView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request):
         return Response({
-            "signup": "",
+            "signup": "http://127.0.0.1:8000/api/account/signup/",
         })
 
 class SignupViewAPI(APIView):
