@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    # Website URLs
+    # Account app URLs
     path('account/', include('account.urls')),
     
     
