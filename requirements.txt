@@ -10,3 +10,4 @@ django-redis
 python-dotenv
 channels
 daphne
+psycopg2
