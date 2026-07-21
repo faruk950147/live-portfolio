@@ -124,3 +124,6 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
             self.full_clean()
 
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.username
