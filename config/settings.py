@@ -84,6 +84,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
         "KEY_PREFIX": "live_portfolio",
+        "TIMEOUT": 300,  # Cache timeout in seconds (5 minutes)
     }
 }
 
