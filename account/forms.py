@@ -86,9 +86,12 @@ class SignupForm(StyledForm, forms.ModelForm):
                 otp = OTPService.generate()
                 OTPService.save(user.email, otp)
 
-                # Send email after successful commit
+                # Send OTP after successful commit
                 transaction.on_commit(
-                    lambda: send_verification_email.delay(user.email, otp)
+                    lambda: send_verification_email.delay(
+                        user.email,
+                        otp
+                    )
                 )
 
         return user
