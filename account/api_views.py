@@ -1,6 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
+
+from account.serializers import (
+    SignupSerializer,
+)
 
 def success(message, data=None, code=200):
     return Response({
@@ -22,3 +27,20 @@ class RootAPIView(APIView):
         return Response({
             "signup": "",
         })
+
+class SignupViewAPI(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return success(
+            "Signup successful. Verify your email.",
+            {"user_id": user.id},
+            status.HTTP_201_CREATED
+        )
+
+
+        
