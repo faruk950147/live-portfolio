@@ -9,7 +9,7 @@ def send_email(subject, message, email):
         message=message,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[email],
-        fail_silently=False
+        fail_silently=False,
     )
 
 def normalize_phone_number(phone):
