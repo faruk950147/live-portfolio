@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from account.services import OTPService
 from account.tasks import send_verification_email
@@ -28,7 +30,6 @@ def validate_password(password):
         raise serializers.ValidationError("Password must contain at least one number.")
 
     return password
-
 
 # ========================= SIGNUP =========================
 class SignupSerializer(serializers.ModelSerializer):
@@ -69,7 +70,6 @@ class SignupSerializer(serializers.ModelSerializer):
 
         return user
     
-
 # ========================= EMAIL VERIFICATION =========================
 class VerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -104,9 +104,7 @@ class VerifyEmailSerializer(serializers.Serializer):
 
         return user
 
-
 # ========================= LOGIN =========================
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(
@@ -122,16 +120,20 @@ class LoginSerializer(serializers.Serializer):
         identifier = attrs["username"].strip()
         password = attrs["password"]
 
+        # username/email/phone 
         user = User.objects.filter(
             Q(username=identifier) |
             Q(email=identifier) |
             Q(phone=identifier)
         ).first()
 
-        if user is None:
+        if not user:
             raise serializers.ValidationError({"detail": "Invalid credentials."})
 
-        if not user.check_password(password):
+        # Django authentication
+        user = authenticate(username=user.username, password=password)
+
+        if user is None:
             raise serializers.ValidationError({"detail": "Invalid credentials."})
 
         if not user.is_verified:
@@ -140,8 +142,39 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError({"detail": "Your account is inactive."})
 
-        attrs["user"] = user
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "phone": user.phone,
+            },
+            "tokens": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+        }
+
+# ====================== LOGOUT ================================
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+        self.token = attrs["refresh"]
         return attrs
+
+    def save(self, **kwargs):
+        try:
+            token = RefreshToken(self.token)
+            token.blacklist()
+        except TokenError:
+            raise serializers.ValidationError({"refresh": "Invalid or expired refresh token."})
+
+
+
+
 
 
 

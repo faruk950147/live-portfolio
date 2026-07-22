@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from celery.schedules import crontab
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,8 +32,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Third-party apps
-    'rest_framework',
-    'corsheaders',
+    'rest_framework',  # DRF
+    'corsheaders',  # CORS
+    'rest_framework_simplejwt',  # JWT auth
+    'rest_framework_simplejwt.token_blacklist',  # JWT token blacklist
     # Local apps
     'home',
     'account',
@@ -91,6 +94,7 @@ CACHES = {
         "TIMEOUT": 300,  # Cache timeout in seconds (5 minutes)
     }
 }
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -192,13 +196,34 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 # =========================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        
+        # JWT Authentication this is used for API authentication
+        'rest_framework_simplejwt.authentication.JWTAuthentication', 
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # Default permission for API views 
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+# =========================
+# Simple JWT
+# =========================
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    
+    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+}
+
 
 # =========================
 # Logging

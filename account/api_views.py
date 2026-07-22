@@ -7,6 +7,8 @@ from account.serializers import (
     SignupSerializer,
     VerifyEmailSerializer,
     LoginSerializer,
+    LogoutSerializer,
+    
 )
 
 def success(message, data=None, code=200):
@@ -67,10 +69,22 @@ class LoginViewAPI(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return success(
-            "Login successful",
-            serializer.validated_data
-        )        
+        return Response(
+            serializer.validated_data,
+            status=status.HTTP_200_OK,
+        )
+        
+# ========================= LOGOUT =============================
+class LogoutView(APIView):
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {"message": "Logout successful."},
+            status=status.HTTP_200_OK
+        )
 
         
         
