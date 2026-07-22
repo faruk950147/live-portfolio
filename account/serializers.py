@@ -2,8 +2,10 @@ import re
 
 from django.db import transaction
 from django.db.models import Q
+from typing import Any
+
 from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, update_session_auth_hash
 
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -33,120 +35,175 @@ def validate_password(password):
 
 # ========================= SIGNUP =========================
 class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, trim_whitespace=False)
-    password2 = serializers.CharField(write_only=True, trim_whitespace=False)
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+    password2 = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
 
     class Meta:
         model = User
-        fields = ["username", "email", "phone", "password", "password2"]
+        fields = (
+            "username",
+            "email",
+            "phone",
+            "password",
+            "password2",
+        )
 
-    def validate(self, attrs):
-        password = attrs["password"]
-        password2 = attrs["password2"]
+    def validate_username(self, value: str) -> str:
+        value = value.strip().lower()
+
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Username already exists.")
+
+        return value
+
+    def validate_email(self, value: str) -> str:
+        value = value.strip().lower()
+
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Email already exists.")
+
+        return value
+
+    def validate_phone(self, value: str) -> str:
+        if User.objects.filter(phone=value).exists():
+            raise serializers.ValidationError("Phone already exists.")
+
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        password = attrs.get("password")
+        password2 = attrs.pop("password2")
 
         if password != password2:
-            raise serializers.ValidationError({"password2": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"password2": "Passwords do not match."}
+            )
 
         validate_password(password)
 
         return attrs
 
-    def create(self, validated_data):
-        validated_data.pop("password2")
+    def create(self, validated_data: dict) -> User:
         password = validated_data.pop("password")
 
         with transaction.atomic():
             user = User.objects.create_user(
-                password=password, is_active=False, 
-                is_verified=False, **validated_data,
+                password=password,
+                is_active=False,
+                is_verified=False,
+                **validated_data,
             )
 
-            # Generate & Save OTP
             otp = OTPService.generate()
             OTPService.save(user.email, otp)
 
-            # Send OTP after successful commit
-            transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
+            transaction.on_commit(
+                lambda: send_verification_email.delay(user.email, otp)
+            )
 
         return user
     
 # ========================= EMAIL VERIFICATION =========================
 class VerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    otp = serializers.CharField(min_length=6, max_length=6, trim_whitespace=True)
+    otp = serializers.CharField(
+        min_length=6,
+        max_length=6,
+        trim_whitespace=True,
+    )
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict) -> dict:
         email = attrs["email"].strip().lower()
         otp = attrs["otp"].strip()
 
-        user = User.objects.filter(email=email).first()
+        user = User.objects.filter(email__iexact=email).first()
 
-        if not user:
-            raise serializers.ValidationError({"email": "User does not exist."})
+        if user is None:
+            raise serializers.ValidationError(
+                {"email": "User does not exist."}
+            )
 
         if user.is_verified:
-            raise serializers.ValidationError({"email": "Email is already verified."})
+            raise serializers.ValidationError(
+                {"email": "Email is already verified."}
+            )
 
         if not OTPService.verify(user.email, otp):
-            raise serializers.ValidationError({"otp": "Invalid or expired OTP."})
+            raise serializers.ValidationError(
+                {"otp": "Invalid or expired OTP."}
+            )
 
         attrs["user"] = user
         return attrs
 
-    def save(self, **kwargs):
+    def save(self, **kwargs) -> User:
         user = self.validated_data["user"]
 
         with transaction.atomic():
             user.is_verified = True
             user.is_active = True
-            user.save(update_fields=["is_verified", "is_active"])
-            OTPService.delete(user.email)
+            user.save(update_fields=[
+                "is_verified",
+                "is_active",
+            ])
 
         return user
 
 # ========================= LOGIN =========================
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    username = serializers.CharField(
+        max_length=150,
+        trim_whitespace=True,
+    )
+
     password = serializers.CharField(
         write_only=True,
         trim_whitespace=False,
+        style={"input_type": "password"},
     )
+
     keep_logged_in = serializers.BooleanField(
         required=False,
         default=False,
     )
 
-    def validate(self, attrs):
-        identifier = attrs["username"].strip()
+    def validate(self, attrs: dict) -> dict:
+        identifier = attrs["username"].strip().lower()
         password = attrs["password"]
 
-        # username/email/phone 
-        user = User.objects.filter(
-            Q(username=identifier) |
-            Q(email=identifier) |
-            Q(phone=identifier)
+        user_qs = User.objects.filter(
+            Q(username__iexact=identifier)
+            | Q(email__iexact=identifier)
+            | Q(phone=identifier)
         ).first()
 
-        if not user:
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
+        if user_qs is None:
+            raise serializers.ValidationError({"detail": "Invalid username/email/phone or password."})
 
-        # Django authentication
         user = authenticate(username=user.username, password=password)
 
         if user is None:
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
-
-        if not user.is_verified:
-            raise serializers.ValidationError({"detail": "Please verify your email first."})
+            raise serializers.ValidationError({"detail": "Invalid username/email/phone or password."})
 
         if not user.is_active:
             raise serializers.ValidationError({"detail": "Your account is inactive."})
+
+        if not user.is_verified:
+            raise serializers.ValidationError({"detail": "Please verify your email first."})
 
         refresh = RefreshToken.for_user(user)
 
         return {
             "user": {
-                "id": user.id,
+                "id": user.pk,
                 "username": user.username,
                 "email": user.email,
                 "phone": user.phone,
@@ -156,25 +213,193 @@ class LoginSerializer(serializers.Serializer):
                 "refresh": str(refresh),
             },
         }
-
+    
 # ====================== LOGOUT ================================
 class LogoutSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
+    refresh = serializers.CharField(
+        write_only=True,
+        trim_whitespace=True,
+    )
 
-    def validate(self, attrs):
-        self.token = attrs["refresh"]
+    def validate(self, attrs: dict) -> dict:
+        self.refresh_token = attrs["refresh"].strip()
+
+        if not self.refresh_token:
+            raise serializers.ValidationError(
+                {"refresh": "Refresh token is required."}
+            )
+
         return attrs
 
-    def save(self, **kwargs):
+    def save(self, **kwargs) -> None:
         try:
-            token = RefreshToken(self.token)
+            token = RefreshToken(self.refresh_token)
             token.blacklist()
         except TokenError:
-            raise serializers.ValidationError({"refresh": "Invalid or expired refresh token."})
+            raise serializers.ValidationError(
+                {"refresh": "Invalid or expired refresh token."}
+            )
+            
+# ========================= CHANGE PASSWORD =========================
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+    new_password2 = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
 
+    def validate(self, attrs: dict) -> dict:
+        user = self.context["request"].user
 
+        if not user.check_password(attrs["old_password"]):
+            raise serializers.ValidationError(
+                {"old_password": "Incorrect old password."}
+            )
 
+        if attrs["new_password"] != attrs["new_password2"]:
+            raise serializers.ValidationError(
+                {"new_password2": "Passwords do not match."}
+            )
 
+        if attrs["old_password"] == attrs["new_password"]:
+            raise serializers.ValidationError(
+                {"new_password": "New password must be different from the old password."}
+            )
 
+        validate_password(attrs["new_password"])
 
+        return attrs
 
+    def save(self) -> User:
+        user = self.context["request"].user
+
+        with transaction.atomic():
+            user.set_password(self.validated_data["new_password"])
+            user.save(update_fields=["password"])
+
+        update_session_auth_hash(self.context["request"], user)
+
+        return user
+
+# ========================= PASSWORD RESET REQUEST =========================
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs: dict) -> dict:
+        email = attrs["email"].strip().lower()
+
+        self.user = User.objects.filter(
+            email__iexact=email,
+            is_active=True,
+            is_verified=True,
+        ).first()
+
+        attrs["email"] = email
+        return attrs
+
+    def save(self) -> dict:
+        if self.user:
+            otp = OTPService.generate()
+            OTPService.save(self.user.email, otp)
+
+            transaction.on_commit(
+                lambda: send_verification_email.delay(self.user.email, otp))
+
+        return {"message": ("If an account with this email exists, " "an OTP has been sent.")}
+
+# ========================= PASSWORD RESET CONFIRM =========================
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    otp = serializers.CharField(
+        min_length=6,
+        max_length=6,
+        trim_whitespace=True,
+    )
+
+    new_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    new_password2 = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    def validate(self, attrs: dict) -> dict:
+        email = attrs["email"].strip().lower()
+        otp = attrs["otp"].strip()
+
+        if attrs["new_password"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "Passwords do not match."})
+
+        validate_password(attrs["new_password"])
+
+        user = User.objects.filter(
+            email__iexact=email,
+            is_active=True,
+            is_verified=True,
+        ).first()
+
+        if user is None:
+            raise serializers.ValidationError({"email": "Invalid email."})
+
+        if not OTPService.verify(user.email, otp):
+            raise serializers.ValidationError({"otp": "Invalid or expired OTP."})
+
+        attrs["user"] = user
+
+        return attrs
+
+    def save(self) -> dict:
+        user = self.validated_data["user"]
+
+        with transaction.atomic():
+            user.set_password(self.validated_data["new_password"])
+
+            user.save(update_fields=["password"])
+
+        return {"message": "Password reset successful."}
+
+# ===================== RESEND EMAIL ================================
+class ResendVerificationEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs: dict) -> dict:
+        email = attrs["email"].strip().lower()
+
+        user = User.objects.filter(email__iexact=email).first()
+
+        if user is None:
+            raise serializers.ValidationError({"email": "User does not exist."})
+
+        if user.is_verified:
+            raise serializers.ValidationError({"email": "Email is already verified."})
+
+        attrs["user"] = user
+        attrs["email"] = email
+
+        return attrs
+
+    def save(self) -> dict:
+        user = self.validated_data["user"]
+
+        otp = OTPService.generate()
+        OTPService.save(user.email, otp)
+
+        transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
+
+        return {"message": "Verification OTP has been resent."}

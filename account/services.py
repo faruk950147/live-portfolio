@@ -1,23 +1,45 @@
-# account/services.py
-
 from django.core.cache import cache
-import random
+import secrets
+
 
 class OTPService:
+    PREFIX = "otp"
+    OTP_LENGTH = 6
+    OTP_TIMEOUT = 300  # 5 minutes
+
+    @classmethod
+    def _key(cls, identifier: str) -> str:
+        return f"{cls.PREFIX}:{identifier}"
 
     @staticmethod
-    def generate():
-        return str(random.randint(100000, 999999))
+    def generate() -> str:
+        return str(secrets.randbelow(900000) + 100000)
 
-    @staticmethod
-    def save(identifier, otp, timeout=300):
-        cache.set(f"otp:{identifier}", otp, timeout)
+    @classmethod
+    def save(cls, identifier: str, otp: str, timeout: int = None) -> None:
+        cache.set(
+            cls._key(identifier),
+            otp,
+            timeout or cls.OTP_TIMEOUT,
+        )
 
-    @staticmethod
-    def verify(identifier, otp):
-        saved = cache.get(f"otp:{identifier}")
-        return saved == otp
+    @classmethod
+    def verify(cls, identifier: str, otp: str) -> bool:
+        if not otp:
+            return False
 
-    @staticmethod
-    def delete(identifier):
-        cache.delete(f"otp:{identifier}")
+        saved = cache.get(cls._key(identifier))
+
+        if saved is None:
+            return False
+
+        if str(saved) != str(otp):
+            return False
+
+        # One-time use
+        cache.delete(cls._key(identifier))
+        return True
+
+    @classmethod
+    def delete(cls, identifier: str) -> None:
+        cache.delete(cls._key(identifier))

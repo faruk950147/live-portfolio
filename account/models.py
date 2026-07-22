@@ -33,8 +33,8 @@ class UserManager(BaseUserManager):
             raise ValueError(_("Phone number is required"))
 
         user = self.model(
-            username=username.strip().casefold(),
-            email=self.normalize_email(email),
+            username=username.strip().lower(),
+            email=self.normalize_email(email.strip().lower()),
             phone=normalize_phone_number(phone),
             **extra_fields,
         )
@@ -44,7 +44,7 @@ class UserManager(BaseUserManager):
         else:
             user.set_unusable_password()
 
-        user.full_clean()
+        # save() will call full_clean()
         user.save(using=self._db)
 
         return user
@@ -55,11 +55,11 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_active", True)
         extra_fields.setdefault("is_verified", True)
 
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True")
+        if not extra_fields.get("is_staff"):
+            raise ValueError(_("Superuser must have is_staff=True"))
 
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True")
+        if not extra_fields.get("is_superuser"):
+            raise ValueError(_("Superuser must have is_superuser=True"))
 
         return self.create_user(
             username=username,
@@ -88,7 +88,7 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
 
     phone = models.CharField(
         _("Phone"),
-        max_length=20,
+        max_length=15,
         unique=True,
         validators=[phone_validator],
     )
@@ -96,9 +96,9 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
     image = models.ImageField(
         _("Profile Image"),
         upload_to="users/%Y/%m/%d/",
-        default="media/defaults/default.jpg",
-        null=True,
+        default="defaults/default.jpg",
         blank=True,
+        null=True,
         validators=[
             validate_file_extension,
             validate_image_size,
@@ -119,14 +119,11 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
 
     class Meta:
         db_table = "account_users"
-        verbose_name = _("01. User")
-        verbose_name_plural = _("01. Users")
+        verbose_name = _("User")
+        verbose_name_plural = _("Users")
         ordering = ["-created_at"]
 
         indexes = [
-            models.Index(fields=["username"]),
-            models.Index(fields=["email"]),
-            models.Index(fields=["phone"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["is_active", "is_verified"]),
         ]
@@ -134,9 +131,16 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
     def clean(self):
         super().clean()
 
-        self.username = self.username.strip().casefold()
-        self.email = User.objects.normalize_email(self.email)
-        self.phone = normalize_phone_number(self.phone)
+        if self.username:
+            self.username = self.username.strip().lower()
+
+        if self.email:
+            self.email = self.__class__.objects.normalize_email(
+                self.email.strip().lower()
+            )
+
+        if self.phone:
+            self.phone = normalize_phone_number(self.phone)
 
     def save(self, *args, **kwargs):
         validate = kwargs.pop("validate", True)
@@ -145,24 +149,10 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
             self.full_clean()
 
         super().save(*args, **kwargs)
-
-    @property
-    def image_tag(self):
-        image = getattr(self, "image", None)
-
-        if image and hasattr(image, "url"):
-            return format_html(
-                '''
-                <img src="{}" style="width:30px; height:30px; object-fit:cover; 
-                border-radius:5px; border:1px solid #ddd;" />
-                ''',
-                image.url
-            )
-
-        return format_html('<span>No Image</span>')
+        
 
     def __str__(self):
         return self.username
 
     def __repr__(self):
-        return f"<User: {self.username}>"
+        return f"<User(id={self.pk}, username='{self.username}')>"
