@@ -1,7 +1,9 @@
 import re
 
 from django.db import transaction
+from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate
 
 from rest_framework import serializers
 
@@ -103,6 +105,43 @@ class VerifyEmailSerializer(serializers.Serializer):
         return user
 
 
+# ========================= LOGIN =========================
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+    )
+    keep_logged_in = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    def validate(self, attrs):
+        identifier = attrs["username"].strip()
+        password = attrs["password"]
+
+        user = User.objects.filter(
+            Q(username=identifier) |
+            Q(email=identifier) |
+            Q(phone=identifier)
+        ).first()
+
+        if user is None:
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+
+        if not user.check_password(password):
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+
+        if not user.is_verified:
+            raise serializers.ValidationError({"detail": "Please verify your email first."})
+
+        if not user.is_active:
+            raise serializers.ValidationError({"detail": "Your account is inactive."})
+
+        attrs["user"] = user
+        return attrs
 
 
 

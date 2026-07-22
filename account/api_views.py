@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny
 from account.serializers import (
     SignupSerializer,
     VerifyEmailSerializer,
+    LoginSerializer,
 )
 
 def success(message, data=None, code=200):
@@ -29,6 +30,7 @@ class RootAPIView(APIView):
         return Response({
             "signup": "http://127.0.0.1:8000/api/account/signup/",
             "verify_email": "http://127.0.0.1:8000/api/account/verify/email/",
+            "login": "http://127.0.0.1:8000/api/account/login/",
         })
 
 # ============================ SIGNUP ============================
@@ -57,4 +59,20 @@ class VerifyEmailViewAPI(APIView):
 
         return success("Email verified successfully")
 
+# =========================== LOGIN ============================
+class LoginViewAPI(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return success(
+            "Login successful",
+            serializer.validated_data
+        )        
+
+        
+        
+        
         

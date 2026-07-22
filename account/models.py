@@ -96,7 +96,7 @@ class User(AbstractBaseUser, PermissionsMixin, ImageTagMixin):
     image = models.ImageField(
         _("Profile Image"),
         upload_to="users/%Y/%m/%d/",
-        default="defaults/default.jpg",
+        default="media/defaults/default.jpg",
         null=True,
         blank=True,
         validators=[
