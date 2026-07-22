@@ -42,9 +42,7 @@ class SignupSerializer(serializers.ModelSerializer):
         password2 = attrs["password2"]
 
         if password != password2:
-            raise serializers.ValidationError(
-                {"password2": "Passwords do not match."}
-            )
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
 
         validate_password(password)
 
@@ -56,10 +54,8 @@ class SignupSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             user = User.objects.create_user(
-                password=password,
-                is_active=False,
-                is_verified=False,
-                **validated_data,
+                password=password, is_active=False, 
+                is_verified=False, **validated_data,
             )
 
             # Generate & Save OTP
@@ -67,11 +63,46 @@ class SignupSerializer(serializers.ModelSerializer):
             OTPService.save(user.email, otp)
 
             # Send OTP after successful commit
-            transaction.on_commit(
-                lambda: send_verification_email.delay(
-                    user.email,
-                    otp
-                )
-            )
+            transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
 
         return user
+    
+
+# ========================= EMAIL VERIFICATION =========================
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(min_length=6, max_length=6, trim_whitespace=True)
+
+    def validate(self, attrs):
+        email = attrs["email"].strip().lower()
+        otp = attrs["otp"].strip()
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            raise serializers.ValidationError({"email": "User does not exist."})
+
+        if user.is_verified:
+            raise serializers.ValidationError({"email": "Email is already verified."})
+
+        if not OTPService.verify(user.email, otp):
+            raise serializers.ValidationError({"otp": "Invalid or expired OTP."})
+
+        attrs["user"] = user
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.validated_data["user"]
+
+        with transaction.atomic():
+            user.is_verified = True
+            user.is_active = True
+            user.save(update_fields=["is_verified", "is_active"])
+            OTPService.delete(user.email)
+
+        return user
+
+
+
+
+
