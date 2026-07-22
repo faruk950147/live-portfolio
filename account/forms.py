@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from django import forms
 from django.db import transaction
@@ -11,7 +12,7 @@ User = get_user_model()
 
 
 # ========================= PASSWORD VALIDATION =========================
-def validate_password_strength(password):
+def validate_password_strength(password: str) -> str:
     if not password:
         raise forms.ValidationError("Password is required.")
 
@@ -19,20 +20,26 @@ def validate_password_strength(password):
         raise forms.ValidationError("Password must be at least 8 characters.")
 
     if not re.search(r"[A-Z]", password):
-        raise forms.ValidationError("Password must contain at least one uppercase letter.")
+        raise forms.ValidationError(
+            "Password must contain at least one uppercase letter."
+        )
 
     if not re.search(r"[a-z]", password):
-        raise forms.ValidationError("Password must contain at least one lowercase letter.")
+        raise forms.ValidationError(
+            "Password must contain at least one lowercase letter."
+        )
 
     if not re.search(r"\d", password):
-        raise forms.ValidationError("Password must contain at least one number.")
+        raise forms.ValidationError(
+            "Password must contain at least one number."
+        )
 
     return password
 
 
 # ========================= BASE STYLED FORM =========================
 class StyledForm(forms.Form):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
@@ -59,7 +66,31 @@ class SignupForm(StyledForm, forms.ModelForm):
         model = User
         fields = ["username", "email", "phone", "password", "password2"]
 
-    def clean(self):
+    def clean_username(self) -> str:
+        username = self.cleaned_data.get("username")
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Username already exists.")
+
+        return username
+
+    def clean_email(self) -> str:
+        email = self.cleaned_data.get("email")
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Email already exists.")
+
+        return email
+
+    def clean_phone(self) -> str:
+        phone = self.cleaned_data.get("phone")
+
+        if User.objects.filter(phone=phone).exists():
+            raise forms.ValidationError("Phone number already exists.")
+
+        return phone
+
+    def clean(self) -> dict[str, Any]:
         cleaned_data = super().clean()
 
         password = cleaned_data.get("password")
@@ -72,7 +103,7 @@ class SignupForm(StyledForm, forms.ModelForm):
 
         return cleaned_data
 
-    def save(self, commit=True):
+    def save(self, commit: bool = True) -> User:
         user = super().save(commit=False)
 
         user.set_password(self.cleaned_data["password"])
@@ -82,16 +113,12 @@ class SignupForm(StyledForm, forms.ModelForm):
         if commit:
             with transaction.atomic():
                 user.save()
-                # Generate and save OTP
+
                 otp = OTPService.generate()
                 OTPService.save(user.email, otp)
 
-                # Send OTP after successful commit
                 transaction.on_commit(
-                    lambda: send_verification_email.delay(
-                        user.email,
-                        otp
-                    )
+                    lambda: send_verification_email.delay(user.email, otp)
                 )
 
         return user
