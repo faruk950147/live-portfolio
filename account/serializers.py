@@ -83,9 +83,7 @@ class SignupSerializer(serializers.ModelSerializer):
         password2 = attrs.pop("password2")
 
         if password != password2:
-            raise serializers.ValidationError(
-                {"password2": "Passwords do not match."}
-            )
+            raise serializers.ValidationError({"password2": "Passwords do not match."})
 
         validate_password(password)
 
@@ -127,19 +125,13 @@ class VerifyEmailSerializer(serializers.Serializer):
         user = User.objects.filter(email__iexact=email).first()
 
         if user is None:
-            raise serializers.ValidationError(
-                {"email": "User does not exist."}
-            )
+            raise serializers.ValidationError({"email": "User does not exist."})
 
         if user.is_verified:
-            raise serializers.ValidationError(
-                {"email": "Email is already verified."}
-            )
+            raise serializers.ValidationError({"email": "Email is already verified."})
 
         if not OTPService.verify(user.email, otp):
-            raise serializers.ValidationError(
-                {"otp": "Invalid or expired OTP."}
-            )
+            raise serializers.ValidationError({"otp": "Invalid or expired OTP."})
 
         attrs["user"] = user
         return attrs
@@ -225,9 +217,7 @@ class LogoutSerializer(serializers.Serializer):
         self.refresh_token = attrs["refresh"].strip()
 
         if not self.refresh_token:
-            raise serializers.ValidationError(
-                {"refresh": "Refresh token is required."}
-            )
+            raise serializers.ValidationError({"refresh": "Refresh token is required."})
 
         return attrs
 
@@ -236,9 +226,7 @@ class LogoutSerializer(serializers.Serializer):
             token = RefreshToken(self.refresh_token)
             token.blacklist()
         except TokenError:
-            raise serializers.ValidationError(
-                {"refresh": "Invalid or expired refresh token."}
-            )
+            raise serializers.ValidationError({"refresh": "Invalid or expired refresh token."})
             
 # ========================= CHANGE PASSWORD =========================
 class ChangePasswordSerializer(serializers.Serializer):
@@ -262,19 +250,13 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context["request"].user
 
         if not user.check_password(attrs["old_password"]):
-            raise serializers.ValidationError(
-                {"old_password": "Incorrect old password."}
-            )
+            raise serializers.ValidationError({"old_password": "Incorrect old password."})
 
         if attrs["new_password"] != attrs["new_password2"]:
-            raise serializers.ValidationError(
-                {"new_password2": "Passwords do not match."}
-            )
+            raise serializers.ValidationError({"new_password2": "Passwords do not match."})
 
         if attrs["old_password"] == attrs["new_password"]:
-            raise serializers.ValidationError(
-                {"new_password": "New password must be different from the old password."}
-            )
+            raise serializers.ValidationError( {"new_password": "New password must be different from the old password."})
 
         validate_password(attrs["new_password"])
 
