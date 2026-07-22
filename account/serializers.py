@@ -315,7 +315,7 @@ class PasswordResetSerializer(serializers.Serializer):
             transaction.on_commit(
                 lambda: send_verification_email.delay(self.user.email, otp))
 
-        return {"message": ("If an account with this email exists, " "an OTP has been sent.")}
+        return self.user
 
 # ========================= PASSWORD RESET CONFIRM =========================
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -372,8 +372,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
             user.save(update_fields=["password"])
 
-        return {"message": "Password reset successful."}
-
+        return user
+    
 # ===================== RESEND EMAIL ================================
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -394,12 +394,11 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
 
         return attrs
 
-    def save(self) -> dict:
+    def save(self) -> User:
         user = self.validated_data["user"]
 
         otp = OTPService.generate()
         OTPService.save(user.email, otp)
 
         transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
-
-        return {"message": "Verification OTP has been resent."}
+        return user
