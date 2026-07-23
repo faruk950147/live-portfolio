@@ -160,7 +160,6 @@ class VerifyEmailForm(StyledForm):
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
         }),
-        strip=True
     )
 
     otp = forms.CharField(
@@ -172,7 +171,7 @@ class VerifyEmailForm(StyledForm):
             "maxlength": "6"
         })
     )
-
+    
     def clean(self):
         cleaned_data = super().clean()
 
@@ -325,8 +324,7 @@ class PasswordResetForm(StyledForm):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        }),
-        strip=True
+        })
     )
 
     def __init__(self, *args, **kwargs):
@@ -359,8 +357,7 @@ class PasswordResetConfirmForm(forms.Form):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        }),
-        strip=True
+        })
     )
 
     otp = forms.CharField(
@@ -432,8 +429,7 @@ class ResendVerificationEmailForm(forms.Form):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        }),
-        strip=True
+        })
     )
 
     def clean(self):
