@@ -15,6 +15,7 @@ from mixins.mixing import LoginRequiredMixin, LogoutRequiredMixin
 
 # ===================== SIGNUP ====================
 class SignupView(LogoutRequiredMixin, generic.View):
+    logout_url = 'logout'
     def get(self, request):
         return render(request, "account/signup.html", {"form": SignupForm()})
 
@@ -29,6 +30,7 @@ class SignupView(LogoutRequiredMixin, generic.View):
     
 # ================= VERIFY EMAIL ======================
 class VerifyEmailView(LogoutRequiredMixin, generic.View):
+    logout_url = 'logout'
     def get(self, request):
         return render(request, "account/verify_email.html", {"form": VerifyEmailForm()})
 
@@ -44,7 +46,8 @@ class VerifyEmailView(LogoutRequiredMixin, generic.View):
     
 
 # =================== LOGIN =========================
-class LoginView(LogoutRequiredMixin, generic.View):
+class LoginView(LogoutRequiredMixin, generic.View):    
+    logout_url = 'logout'
     def get(self, request):
         return render(request, "account/login.html", {"form": LoginForm()})
 
@@ -60,6 +63,7 @@ class LoginView(LogoutRequiredMixin, generic.View):
 
 # =================== LOGOUT =========================
 class LogoutView(LoginRequiredMixin, generic.View):
+    login_url = 'login'
     def get(self, request):
         logout(request)
         return redirect('login') 
@@ -67,6 +71,7 @@ class LogoutView(LoginRequiredMixin, generic.View):
 
 # =================== CHANGE PASSWORD ==================
 class ChangePasswordView(LoginRequiredMixin, generic.View):
+    login_url = 'login'
     template_name = "account/change_password.html"
 
     def get(self, request, *args, **kwargs):
@@ -85,6 +90,7 @@ class ChangePasswordView(LoginRequiredMixin, generic.View):
 
 # ========================= PASSWORD RESET REQUEST =========================
 class PasswordResetView(generic.View):
+    logout_url = 'logout'
     template_name = "account/password_reset.html"
 
     def get(self, request, *args, **kwargs):
@@ -104,6 +110,7 @@ class PasswordResetView(generic.View):
 
 # ========================= PASSWORD RESET CONFIRM =========================
 class PasswordResetConfirmView(generic.View):
+    logout_url = 'logout'
     template_name = "account/password_reset_confirm.html"
 
     def get(self, request, *args, **kwargs):
@@ -125,6 +132,7 @@ class PasswordResetConfirmView(generic.View):
 
 # ===================== RESEND EMAIL ================================
 class ResendVerificationEmailView(generic.View):
+    logout_url = 'logout'
     template_name = "account/resend_verification_email.html"
 
     def get(self, request, *args, **kwargs):
