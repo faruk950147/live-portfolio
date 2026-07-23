@@ -53,15 +53,20 @@ class RootAPIView(APIView):
             {
                 "message": "Account API is running.",
                 "endpoints": {
-                    "signup": "/api/account/signup/",
-                    "verify_email": "/api/account/verify/email/",
+                    "signup": "http://127.0.0.1:8000/api/account/signup/",
+                    "verify_email": "http://127.0.0.1:8000/api/account/verify/email/",
+                    "login": "http://127.0.0.1:8000/api/account/login/",
+                    "logout": "http://127.0.0.1:8000/api/account/logout",
+                    "change_password": "http://127.0.0.1:8000/api/account/change/password/",
+                    "password_reset": "http://127.0.0.1:8000/password/reset/",
+                    "password_reset_confirm": "http://127.0.0.1:8000/password/reset/confirm/",
+                    "resend_verify_email": "http://127.0.0.1:8000/resend/verify/email/",
                 },
             }
         )
 
 
 # ========================= SIGNUP =========================
-
 class SignupViewAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -78,7 +83,6 @@ class SignupViewAPI(APIView):
 
 
 # ========================= VERIFY EMAIL =========================
-
 class VerifyEmailViewAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -95,7 +99,6 @@ class VerifyEmailViewAPI(APIView):
 
 
 # ========================= LOGIN =========================
-
 class LoginViewAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -108,7 +111,6 @@ class LoginViewAPI(APIView):
 
 
 # ========================= LOGOUT =========================
-
 class LogoutViewAPI(APIView):
     permission_classes = [IsAuthenticated]
 
