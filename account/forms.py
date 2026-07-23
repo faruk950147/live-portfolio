@@ -104,7 +104,7 @@ class SignupForm(StyledForm, forms.ModelForm):
             validate_password_strength(password)
 
         return cleaned_data
-    
+    '''
     def create(self) -> User:
         with transaction.atomic():
             user = User.objects.create_user(
@@ -124,6 +124,25 @@ class SignupForm(StyledForm, forms.ModelForm):
             )
 
         return user
+    '''
+    def save(self, commit: bool = True) -> User:
+        user = super().save(commit=False)
+
+        user.set_password(self.cleaned_data["password"])
+        user.is_active = False
+        user.is_verified = False
+
+        if commit:
+            with transaction.atomic():
+                user.save()
+
+                otp = OTPService.generate()
+                OTPService.save(user.email, otp)
+
+                transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
+
+
+# ========================= VERIFY EMAIL =======================
 class VerifyEmailForm(StyledForm):
     email = forms.EmailField()
     otp = forms.CharField(
@@ -167,7 +186,7 @@ class VerifyEmailForm(StyledForm):
             ])
 
         return user 
-    
+
 
 # ========================= LOGIN FORM =========================
 class LoginForm(StyledForm):
@@ -230,7 +249,7 @@ class LoginForm(StyledForm):
         cleaned_data["user"] = user
 
         return cleaned_data
-    
+
 
 # =========================== CHANGE PASSWORD =======================
 class ChangePasswordForm(StyledForm):
@@ -321,8 +340,8 @@ class PasswordResetForm(StyledForm):
             transaction.on_commit(lambda: send_verification_email.delay(self.user.email, otp) )
 
         return True
-    
-    
+
+
 # ========================= PASSWORD RESET CONFIRM =========================
 class PasswordResetConfirmForm(forms.Form):
     email = forms.EmailField()
