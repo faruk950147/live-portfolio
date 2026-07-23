@@ -61,11 +61,13 @@ class StyledForm(forms.Form):
 # ========================= SIGNUP FORM =========================
 class SignupForm(StyledForm, forms.ModelForm):
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"})
+        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"}),
+        strip=True
     )
 
     password2 = forms.CharField(
-        widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"})
+        widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"}),
+        strip=True
     )
     class Meta:
         model = User
@@ -157,13 +159,14 @@ class VerifyEmailForm(StyledForm):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        })
+        }),
+        strip=True
     )
 
     otp = forms.CharField(
         min_length=6,
         max_length=6,
-        strip=False,
+        strip=True,
         widget=forms.TextInput(attrs={
             "placeholder": "Your 6-digit OTP",
             "maxlength": "6"
@@ -216,7 +219,8 @@ class LoginForm(StyledForm):
     )
 
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"})
+        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"}),
+        strip=True
     )
 
     keep_logged_in = forms.BooleanField(
@@ -227,42 +231,26 @@ class LoginForm(StyledForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        identifier = cleaned_data.get("username")
+        username = cleaned_data.get("username")
         password = cleaned_data.get("password")
 
-        if not identifier or not password:
+        if not username or not password:
             return cleaned_data
 
-        user_qs = User.objects.filter(
-            Q(username__iexact=identifier)
-            | Q(email__iexact=identifier)
-            | Q(phone=identifier)
-        ).first()
-
-        if user_qs is None:
-            raise forms.ValidationError(
-                "Invalid username/email/phone or password."
-            )
-
         user = authenticate(
-            username=user_qs.username,
-            password=password
+            self.request if hasattr(self, "request") else None,
+            username=username,
+            password=password,
         )
 
         if user is None:
-            raise forms.ValidationError(
-                "Invalid username/email/phone or password."
-            )
+            raise forms.ValidationError("Invalid username/email/phone or password.")
 
         if not user.is_active:
-            raise forms.ValidationError(
-                "Your account is inactive."
-            )
+            raise forms.ValidationError("Your account is inactive.")
 
         if not user.is_verified:
-            raise forms.ValidationError(
-                "Please verify your email first."
-            )
+            raise forms.ValidationError("Please verify your email first.")
 
         # Store authenticated user
         cleaned_data["user"] = user
@@ -274,17 +262,17 @@ class LoginForm(StyledForm):
 class ChangePasswordForm(StyledForm):
     old_password = forms.CharField(
         widget=forms.PasswordInput(attrs={"placeholder": "Your Old Password"}),
-        strip=False,
+        strip=True,
     )
 
     new_password = forms.CharField(
         widget=forms.PasswordInput(attrs={"placeholder": "Your New Password"}),
-        strip=False,
+        strip=True,
     )
 
     new_password2 = forms.CharField(
         widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"}),
-        strip=False,
+        strip=True,
     )
 
     def clean(self):
@@ -337,7 +325,8 @@ class PasswordResetForm(StyledForm):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        })
+        }),
+        strip=True
     )
 
     def __init__(self, *args, **kwargs):
@@ -370,13 +359,14 @@ class PasswordResetConfirmForm(forms.Form):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        })
+        }),
+        strip=True
     )
 
     otp = forms.CharField(
         min_length=6,
         max_length=6,
-        strip=False,
+        strip=True,
         widget=forms.TextInput(attrs={
             "placeholder": "Your 6-digit OTP",
             "maxlength": "6"
@@ -385,12 +375,12 @@ class PasswordResetConfirmForm(forms.Form):
    
     new_password = forms.CharField(
         widget=forms.PasswordInput(attrs={"placeholder": "Your New Password"}),
-        strip=False,
+        strip=True,
     )
 
     new_password2 = forms.CharField(
         widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"}),
-        strip=False,
+        strip=True,
     )
 
     def clean(self):
@@ -442,7 +432,8 @@ class ResendVerificationEmailForm(forms.Form):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
-        })
+        }),
+        strip=True
     )
 
     def clean(self):

@@ -37,12 +37,12 @@ def validate_password(password):
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
     password2 = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
 
@@ -158,7 +158,7 @@ class LoginSerializer(serializers.Serializer):
 
     password = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
 
@@ -168,19 +168,15 @@ class LoginSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs: dict) -> dict:
-        identifier = attrs["username"].strip().lower()
+        username = attrs["username"].strip().lower()
         password = attrs["password"]
 
-        user_qs = User.objects.filter(
-            Q(username__iexact=identifier)
-            | Q(email__iexact=identifier)
-            | Q(phone=identifier)
-        ).first()
 
-        if user_qs is None:
-            raise serializers.ValidationError({"detail": "Invalid username/email/phone or password."})
-
-        user = authenticate(username=user.username, password=password)
+        user = authenticate(
+            self.request if hasattr(self, "request") else None,
+            username=username,
+            password=password,
+        )
 
         if user is None:
             raise serializers.ValidationError({"detail": "Invalid username/email/phone or password."})
@@ -232,17 +228,17 @@ class LogoutSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
     new_password = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
     new_password2 = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
 
@@ -311,13 +307,13 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     new_password = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
 
     new_password2 = serializers.CharField(
         write_only=True,
-        trim_whitespace=False,
+        trim_whitespace=True,
         style={"input_type": "password"},
     )
 
