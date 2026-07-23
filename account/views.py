@@ -37,6 +37,19 @@ class VerifyEmailView(generic.View):
         return render(request, "account/verify_email.html")
     
 
+# =================== LOGIN =========================
+class LoginView(generic.View):
+    def get(self, request):
+        return render(request, "account/login.html", {"form": LoginForm()})
+
+    def post(self, request):
+        form = LoginForm(request.POST)
+
+        if form.is_valid():
+            messages.success(request, "You are logged in.")
+            return redirect("home")
+
+        return render(request, "account/login.html")
 
 
 
