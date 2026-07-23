@@ -66,6 +66,14 @@ class SignupForm(StyledForm, forms.ModelForm):
     class Meta:
         model = User
         fields = ["username", "email", "phone", "password", "password2"]
+        
+        widgets = {
+            "username": forms.TextInput(attrs={"placeholder": "Your username"}),
+            "email": forms.EmailInput(attrs={"placeholder": "Your email"}),
+            "phone": forms.TextInput(attrs={"placeholder": "Your phone number"}),
+            "password": forms.PasswordInput(attrs={"placeholder": "Your Password"}),
+            "password2": forms.PasswordInput(attrs={"placeholder": "Your Confirm Password"}),
+        }
 
     def clean_username(self) -> str:
         username = self.cleaned_data["username"].strip().lower()
@@ -148,7 +156,7 @@ class VerifyEmailForm(StyledForm):
     otp = forms.CharField(
         min_length=6,
         max_length=6,
-        trim_whitespace=True,
+        strip=False
     )
 
     def clean(self):

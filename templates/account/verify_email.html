@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Signup{% endblock title %}
+{% block title %}Verify Email{% endblock title %}
 {% load static %}
 
 {% block main %}
@@ -11,30 +11,28 @@
 
         <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="600">
           <div class="row gy-4">
+
             <div class="col-md-6">
-              {{form.username}}
+              <input type="text" name="name" class="form-control" placeholder="Your Name" required="">
             </div>
 
             <div class="col-md-6 ">
-              {{form.email}}
-            </div>
-            
-            <div class="col-md-6">
-              {{form.phone}}
+              <input type="email" class="form-control" name="email" placeholder="Your Email" required="">
             </div>
 
-            <div class="col-md-6 ">
-              {{form.password}}
+            <div class="col-md-12">
+              <input type="text" class="form-control" name="subject" placeholder="Subject" required="">
             </div>
 
-            <div class="col-md-6 ">
-              {{form.password2}}
+            <div class="col-md-12">
+              <textarea class="form-control" name="message" rows="6" placeholder="Message" required=""></textarea>
             </div>
 
             <div class="col-md-12 text-center">
-              <div class="sent-message"></div>
+              <div class="success-message"></div>
               <div class="error-message"></div>
-              <button type="submit">Signup Now</button>
+
+              <button type="submit">Verify Now</button>
             </div>
 
           </div>
