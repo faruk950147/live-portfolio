@@ -1461,6 +1461,7 @@ section,
 }
 
 .contact .php-email-form button[type=submit] {
+  width: 100%;
   color: var(--contrast-color);
   background: var(--accent-color);
   border: 0;
