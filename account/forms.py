@@ -212,7 +212,7 @@ class LoginForm(StyledForm):
     username = forms.CharField(
         max_length=150,
         strip=True,
-        widget=forms.TelInput(attrs={"placeholder": "Your Username"})
+        widget=forms.TextInput(attrs={"placeholder": "Your Username"})
     )
 
     password = forms.CharField(
