@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock title %}
+{% load static %}
+
+{% block main %}
+  <main class="main">
+    <!-- Contact Section -->
+    <section id="contact" class="contact section">
+
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="600">
+          <h1 class="section-title text-center">Login</h1>
+          <div class="row gy-4">
+            <div class="col-md-6 ">
+              {{form.username}}
+            </div>
+            
+            <div class="col-md-6">
+              {{form.password}}
+            </div>
+
+
+            <div class="col-md-12 text-center">
+              <div class="sent-message"></div>
+              <div class="error-message"></div>
+              <button type="submit">Login Now</button>
+            </div>
+
+          </div>
+        </form><!-- End Contact Form -->
+
+      </div>
+
+    </section><!-- /Contact Section -->
+
+  </main>
+{% endblock main %}
