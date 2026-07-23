@@ -64,8 +64,8 @@ class SignupForm(StyledForm, forms.ModelForm):
         widget=forms.PasswordInput(attrs={"placeholder": "Your Password"})
     )
 
-    password2 = forms.CharField(widget=forms.PasswordInput(
-        attrs={"placeholder": "Confirm Your Password"})
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"})
     )
     class Meta:
         model = User
@@ -273,17 +273,17 @@ class LoginForm(StyledForm):
 # =========================== CHANGE PASSWORD =======================
 class ChangePasswordForm(StyledForm):
     old_password = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={"placeholder": "Your Old Password"}),
         strip=False,
     )
 
     new_password = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={"placeholder": "Your New Password"}),
         strip=False,
     )
 
     new_password2 = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"}),
         strip=False,
     )
 
@@ -334,7 +334,11 @@ class ChangePasswordForm(StyledForm):
 
 # ========================= PASSWORD RESET REQUEST =========================
 class PasswordResetForm(StyledForm):
-    email = forms.EmailField()
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your Email"
+        })
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -363,21 +367,29 @@ class PasswordResetForm(StyledForm):
 
 # ========================= PASSWORD RESET CONFIRM =========================
 class PasswordResetConfirmForm(forms.Form):
-    email = forms.EmailField()
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your Email"
+        })
+    )
 
     otp = forms.CharField(
         min_length=6,
         max_length=6,
-        strip=True,
+        strip=False,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your 6-digit OTP",
+            "maxlength": "6"
+        })
     )
-
+   
     new_password = forms.CharField(
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(attrs={"placeholder": "Your New Password"}),
         strip=False,
     )
 
     new_password2 = forms.CharField(
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(attrs={"placeholder": "Confirm Your Password"}),
         strip=False,
     )
 
@@ -415,7 +427,6 @@ class PasswordResetConfirmForm(forms.Form):
 
         return cleaned_data
 
-
     def save(self):
         user = self.cleaned_data["user"]
 
@@ -428,8 +439,11 @@ class PasswordResetConfirmForm(forms.Form):
 
 # ===================== RESEND EMAIL ================================
 class ResendVerificationEmailForm(forms.Form):
-    email = forms.EmailField()
-
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your Email"
+        })
+    )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -450,7 +464,6 @@ class ResendVerificationEmailForm(forms.Form):
         cleaned_data["email"] = email
 
         return cleaned_data
-
 
     def save(self) -> User:
         user = self.cleaned_data["user"]
