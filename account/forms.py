@@ -60,9 +60,13 @@ class StyledForm(forms.Form):
 
 # ========================= SIGNUP FORM =========================
 class SignupForm(StyledForm, forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput())
-    password2 = forms.CharField(widget=forms.PasswordInput())
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"})
+    )
 
+    password2 = forms.CharField(widget=forms.PasswordInput(
+        attrs={"placeholder": "Confirm Your Password"})
+    )
     class Meta:
         model = User
         fields = ["username", "email", "phone", "password", "password2"]
@@ -71,8 +75,6 @@ class SignupForm(StyledForm, forms.ModelForm):
             "username": forms.TextInput(attrs={"placeholder": "Your username"}),
             "email": forms.EmailInput(attrs={"placeholder": "Your email"}),
             "phone": forms.TextInput(attrs={"placeholder": "Your phone number"}),
-            "password": forms.PasswordInput(attrs={"placeholder": "Your Password"}),
-            "password2": forms.PasswordInput(attrs={"placeholder": "Your Confirm Password"}),
         }
 
     def clean_username(self) -> str:
@@ -152,11 +154,20 @@ class SignupForm(StyledForm, forms.ModelForm):
 
 # ========================= VERIFY EMAIL =======================
 class VerifyEmailForm(StyledForm):
-    email = forms.EmailField()
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your Email"
+        })
+    )
+
     otp = forms.CharField(
         min_length=6,
         max_length=6,
-        strip=False
+        strip=False,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Your 6-digit OTP",
+            "maxlength": "6"
+        })
     )
 
     def clean(self):
@@ -201,11 +212,11 @@ class LoginForm(StyledForm):
     username = forms.CharField(
         max_length=150,
         strip=True,
+        widget=forms.TelInput(attrs={"placeholder": "Your Username"})
     )
 
     password = forms.CharField(
-        widget=forms.PasswordInput(),
-        strip=False,
+        widget=forms.PasswordInput(attrs={"placeholder": "Your Password"})
     )
 
     keep_logged_in = forms.BooleanField(
