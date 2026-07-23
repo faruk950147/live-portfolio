@@ -89,7 +89,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def create(self, validated_data: dict) -> User:
+    def create(self, validated_data: dict[str, Any]) -> User:
         password = validated_data.pop("password")
 
         with transaction.atomic():

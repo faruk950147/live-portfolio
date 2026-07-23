@@ -68,7 +68,7 @@ class SignupForm(StyledForm, forms.ModelForm):
         fields = ["username", "email", "phone", "password", "password2"]
 
     def clean_username(self) -> str:
-        username = self.cleaned_data.get("username")
+        username = self.cleaned_data["username"].strip().lower()
 
         if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("Username already exists.")
@@ -76,7 +76,7 @@ class SignupForm(StyledForm, forms.ModelForm):
         return username
 
     def clean_email(self) -> str:
-        email = self.cleaned_data.get("email")
+        email = self.cleaned_data["email"].strip().lower()
 
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Email already exists.")
@@ -97,33 +97,33 @@ class SignupForm(StyledForm, forms.ModelForm):
         password = cleaned_data.get("password")
         password2 = cleaned_data.get("password2")
 
-        if password != password2:
-            raise forms.ValidationError("Passwords do not match.")
+        if password and password2:
+            if password != password2:
+                raise forms.ValidationError("Passwords do not match.")
 
-        validate_password_strength(password)
+            validate_password_strength(password)
 
         return cleaned_data
+    
+    def create(self) -> User:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=self.cleaned_data["username"],
+                email=self.cleaned_data["email"],
+                phone=self.cleaned_data["phone"],
+                password=self.cleaned_data["password"],
+                is_active=False,
+                is_verified=False,
+            )
 
-    def save(self, commit: bool = True) -> User:
-        user = super().save(commit=False)
+            otp = OTPService.generate()
+            OTPService.save(user.email, otp)
 
-        user.set_password(self.cleaned_data["password"])
-        user.is_active = False
-        user.is_verified = False
-
-        if commit:
-            with transaction.atomic():
-                user.save()
-
-                otp = OTPService.generate()
-                OTPService.save(user.email, otp)
-
-                transaction.on_commit(
-                    lambda: send_verification_email.delay(user.email, otp)
-                )
+            transaction.on_commit(
+                lambda: send_verification_email.delay(user.email, otp)
+            )
 
         return user
-
 class VerifyEmailForm(StyledForm):
     email = forms.EmailField()
     otp = forms.CharField(
