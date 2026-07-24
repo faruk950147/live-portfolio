@@ -89,6 +89,7 @@ h6 {
 .errorlist {
   list-style: none;
   color: #ff0000;
+  text-align: center;
 }
 
 /* PHP Email Form Messages
