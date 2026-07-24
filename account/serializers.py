@@ -179,7 +179,7 @@ class LoginSerializer(serializers.Serializer):
         )
 
         if user is None:
-            raise serializers.ValidationError({"detail": "Invalid username/email/phone or password."})
+            raise serializers.ValidationError({"detail": "Invalid username or email or phone or password."})
 
         if not user.is_active:
             raise serializers.ValidationError({"detail": "Your account is inactive."})

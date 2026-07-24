@@ -247,7 +247,7 @@ class LoginForm(StyledForm):
         )
 
         if user is None:
-            raise forms.ValidationError("Invalid username/email/phone or password.")
+            raise forms.ValidationError("Invalid username or email or phone or password.")
 
         if not user.is_active:
             raise forms.ValidationError("Your account is inactive.")
