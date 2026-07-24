@@ -47,6 +47,13 @@ def send_verification_email(email, otp):
 
     send_email(subject, message, email)
 
+
+@shared_task(
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 3}
+)
 def send_password_reset_email(email, otp):
 
     web_based_endpoint = f"{BASE_URL}account/password/reset/confirm/"
