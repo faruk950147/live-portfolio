@@ -18,6 +18,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+BASE_URL = os.environ.get("BASE_URL", default="http://127.0.0.1:8000")
 
 
 # Application definition

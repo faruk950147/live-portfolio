@@ -13,15 +13,15 @@ from account.views import (
 urlpatterns = [
     # Authentication
     path('signup/', SignupView.as_view(), name='signup'),
-    path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
-    path('resend-verification-email/', ResendVerificationEmailView.as_view(), name='resend-verification-email'),
+    path('verify/email/', VerifyEmailView.as_view(), name='verify-email'),
+    path('resend/verification/email/', ResendVerificationEmailView.as_view(), name='resend-verification-email'),
 
     # Login & Logout
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
 
     # Password Management
-    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
-    path('password-reset/', PasswordResetView.as_view(), name='password-reset'),
-    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('change/password/', ChangePasswordView.as_view(), name='change-password'),
+    path('password/reset/', PasswordResetView.as_view(), name='password-reset'),
+    path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 ]
