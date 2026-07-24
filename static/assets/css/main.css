@@ -86,6 +86,16 @@ h6 {
   color: var(--heading-color);
   font-family: var(--heading-font);
 }
+
+.non-field-errors {
+  background-color: var(--background-color);
+}
+
+.non-field-errors p {
+    color: #ff0000;
+    text-align: center;
+}
+
 .errorlist {
   list-style: none;
   color: #ff0000;

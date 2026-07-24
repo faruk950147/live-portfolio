@@ -28,6 +28,7 @@ class SignupView(LogoutRequiredMixin, generic.View):
 
         return render(request, "account/signup.html", {"form": form})
     
+    
 # ================= VERIFY EMAIL ======================
 class VerifyEmailView(LogoutRequiredMixin, generic.View):
     logout_url = 'logout'
@@ -45,7 +46,6 @@ class VerifyEmailView(LogoutRequiredMixin, generic.View):
         return render(request, "account/verify_email.html")
     
 
-# =================== LOGIN =========================
 # =================== LOGIN =========================
 class LoginView(LogoutRequiredMixin, generic.View):
     logout_url = "logout"
@@ -70,6 +70,7 @@ class LoginView(LogoutRequiredMixin, generic.View):
             return redirect("home")
 
         return render(request, "account/login.html", {"form": form})
+
 
 # =================== LOGOUT =========================
 class LogoutView(LoginRequiredMixin, generic.View):
