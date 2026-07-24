@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from account.services import OTPService
-from account.tasks import send_verification_email
+from account.tasks import send_verification_email, send_password_reset_email
 
 User = get_user_model()
 
@@ -291,7 +291,7 @@ class PasswordResetSerializer(serializers.Serializer):
             OTPService.save(self.user.email, otp)
 
             transaction.on_commit(
-                lambda: send_verification_email.delay(self.user.email, otp))
+                lambda: send_password_reset_email.delay(self.user.email, otp))
 
         return self.user
 

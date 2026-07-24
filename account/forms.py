@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
 
 from account.services import OTPService
-from account.tasks import send_verification_email
+from account.tasks import send_verification_email, send_password_reset_email
 
 User = get_user_model()
 
@@ -347,7 +347,7 @@ class PasswordResetForm(StyledForm):
             otp = OTPService.generate()
             OTPService.save(self.user.email, otp)
 
-            transaction.on_commit(lambda: send_verification_email.delay(self.user.email, otp) )
+            transaction.on_commit(lambda: send_password_reset_email.delay(self.user.email, otp))
 
         return True
 
