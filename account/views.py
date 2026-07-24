@@ -46,23 +46,30 @@ class VerifyEmailView(LogoutRequiredMixin, generic.View):
     
 
 # =================== LOGIN =========================
-class LoginView(LogoutRequiredMixin, generic.View):    
-    logout_url = 'logout'
+# =================== LOGIN =========================
+class LoginView(LogoutRequiredMixin, generic.View):
+    logout_url = "logout"
+
     def get(self, request):
-        return render(request, "account/login.html", {"form": LoginForm()})
+        form = LoginForm(request=request)
+        return render(request, "account/login.html", {"form": form})
 
     def post(self, request):
-        form = LoginForm(request.POST)
+        form = LoginForm(request.POST, request=request)
 
         if form.is_valid():
             user = form.cleaned_data["user"]
+
             login(request, user)
+
+            # Remember me
+            if not form.cleaned_data.get("keep_logged_in"):
+                request.session.set_expiry(0)
 
             messages.success(request, "You are logged in.")
             return redirect("home")
 
-        return render(request, "account/login.html")
-
+        return render(request, "account/login.html", {"form": form})
 
 # =================== LOGOUT =========================
 class LogoutView(LoginRequiredMixin, generic.View):

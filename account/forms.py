@@ -214,6 +214,7 @@ class LoginForm(StyledForm):
     username = forms.CharField(
         max_length=150,
         strip=True,
+        required=True,
         widget=forms.TextInput(attrs={"placeholder": "Your Username"})
     )
 
