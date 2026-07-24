@@ -25,13 +25,19 @@
               {{form.errors.otp}}
             </div>
 
-
             <div class="col-md-12 text-center">
               <div class="sent-message"></div>
               <div class="error-message"></div>
               <button type="submit">Verify Now</button>
             </div>
 
+            <div class="col-md-12 text-center">
+                Didn't receive the verify email?
+                <a href="{% url 'resend-verify-email' %}" target="_blank" rel="noopener noreferrer">
+                    Resend verify email
+                </a>
+            </div>
+            
           </div>
         </form><!-- End Contact Form -->
 

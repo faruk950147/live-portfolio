@@ -7,14 +7,14 @@ from account.views import (
     ChangePasswordView,
     PasswordResetView,
     PasswordResetConfirmView,
-    ResendVerificationEmailView,
+    ResendVerifyEmailView,
 )
 
 urlpatterns = [
     # Authentication
     path('signup/', SignupView.as_view(), name='signup'),
     path('verify/email/', VerifyEmailView.as_view(), name='verify-email'),
-    path('resend/verification/email/', ResendVerificationEmailView.as_view(), name='resend-verification-email'),
+    path('resend/verify/email/', ResendVerifyEmailView.as_view(), name='resend-verify-email'),
 
     # Login & Logout
     path('login/', LoginView.as_view(), name='login'),

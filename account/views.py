@@ -9,7 +9,7 @@ from account.forms import (
     ChangePasswordForm,
     PasswordResetForm,
     PasswordResetConfirmForm,
-    ResendVerificationEmailForm,
+    ResendVerifyEmailForm,
 )
 from mixins.mixing import LoginRequiredMixin, LogoutRequiredMixin
 
@@ -135,16 +135,16 @@ class PasswordResetConfirmView(generic.View):
 
 
 # ===================== RESEND EMAIL ================================
-class ResendVerificationEmailView(generic.View):
+class ResendVerifyEmailView(generic.View):
     logout_url = 'logout'
-    template_name = "account/resend_verification_email.html"
+    template_name = "account/resend_verify_email.html"
 
     def get(self, request, *args, **kwargs):
-        form = ResendVerificationEmailForm()
+        form = ResendVerifyEmailForm()
         return render(request, self.template_name, { "form": form})
 
     def post(self, request, *args, **kwargs):
-        form = ResendVerificationEmailForm(request.POST)
+        form = ResendVerifyEmailForm(request.POST)
 
         if form.is_valid():
             form.save()

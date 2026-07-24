@@ -425,7 +425,7 @@ class PasswordResetConfirmForm(StyledForm):
 
 
 # ===================== RESEND EMAIL ================================
-class ResendVerificationEmailForm(StyledForm):
+class ResendVerifyEmailForm(StyledForm):
     email = forms.EmailField(
         widget=forms.TextInput(attrs={
             "placeholder": "Your Email"
