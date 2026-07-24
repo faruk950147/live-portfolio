@@ -137,6 +137,7 @@ class SignupForm(StyledForm, forms.ModelForm):
 
         return user
     '''
+    
     def save(self, commit: bool = True) -> User:
         user = super().save(commit=False)
 
@@ -152,6 +153,8 @@ class SignupForm(StyledForm, forms.ModelForm):
                 OTPService.save(user.email, otp)
 
                 transaction.on_commit(lambda: send_verification_email.delay(user.email, otp))
+
+        return user
 
 
 # ========================= VERIFY EMAIL =======================
